@@ -7,6 +7,7 @@
     android:orientation="vertical">
 
     <com.example.customclocks.Clock
+        android:id="@+id/clock"
         android:layout_width="300dp"
         android:layout_height="300dp" />
 </LinearLayout>

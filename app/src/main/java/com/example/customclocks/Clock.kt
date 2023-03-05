@@ -16,16 +16,21 @@ import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import kotlinx.coroutines.Runnable
 import java.util.*
 
+/**
+ * @param handHalfWidthCoefficient in range 1..+inf
+ * @param protrudingHeightCoefficient in range 0..+inf
+ * @param handHeightCoefficient in range 0..1
+ */
 data class HandData(
     var handHalfWidth: Int = 0,
     var protrudingHeight: Int = 0,
     val handRect: Rect = Rect(),
     val handRotationMatrix: Matrix = Matrix(),
     val handPath: Path = Path(),
-    val handHalfWidthCoefficient: Int = 1,
-    val protrudingHeightCoefficient: Int = 1,
-    val handHeightCoefficient: Float = 1f,
-    val handPaint: Paint = Paint(ANTI_ALIAS_FLAG).apply {
+    var handHalfWidthCoefficient: Int = 1,
+    var protrudingHeightCoefficient: Int = 1,
+    var handHeightCoefficient: Float = 1f,
+    var handPaint: Paint = Paint(ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         isAntiAlias = true
     }
@@ -34,6 +39,9 @@ data class HandData(
 class Clock(context: Context, attrs: AttributeSet): View(context, attrs) {
     companion object {
         const val DATE_FORMAT_PATTERN = "yyyy/MM/dd HH:mm:ss"
+        enum class HandType {
+            SECOND, MINUTE, HOUR
+        }
     }
 
     private var w = 0f
@@ -70,9 +78,9 @@ class Clock(context: Context, attrs: AttributeSet): View(context, attrs) {
         context.resources, R.drawable.clock_face, null
     )!!
 
-    private val dateFormat = SimpleDateFormat(DATE_FORMAT_PATTERN, Locale.getDefault())
+    val dateFormat get() = SimpleDateFormat(DATE_FORMAT_PATTERN, Locale.getDefault())
 
-    private var seconds = 0L
+    var seconds = 0L
 
     private val timer = Timer()
 
@@ -181,6 +189,33 @@ class Clock(context: Context, attrs: AttributeSet): View(context, attrs) {
 
         clockFaceDrawable.draw(canvas)
         drawHands(canvas)
+    }
+
+    fun changeHandDesign(
+        handType: HandType,
+        handHalfWidthCoefficient: Int = -1,
+        protrudingHeightCoefficient: Int = -1,
+        handHeightCoefficient: Float = -1f,
+        handPaint: Paint? = null
+    ) {
+        val handData = when(handType) {
+            HandType.SECOND -> secondHandData
+            HandType.MINUTE -> minuteHandData
+            HandType.HOUR -> hourHandData
+        }
+
+        if (handHalfWidthCoefficient >= 1) {
+            handData.handHalfWidthCoefficient = handHalfWidthCoefficient
+        }
+        if (protrudingHeightCoefficient >= 0) {
+            handData.protrudingHeightCoefficient = protrudingHeightCoefficient
+        }
+        if (handHeightCoefficient in 0.0..1.0) {
+            handData.handHeightCoefficient = handHeightCoefficient
+        }
+        if (handPaint != null) {
+            handData.handPaint = handPaint
+        }
     }
 
     override fun onSaveInstanceState(): Parcelable {
